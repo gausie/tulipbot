@@ -53,31 +53,37 @@ type Plan = {
 export async function checkTulips(bot: KoLBot, client: KoLClient) {
   const minutes = new Date().getMinutes() % 30;
 
-  if (currentPrices.red < 0 || minutes === 0 || minutes === 15) {
+  // Check at 1 and 16 minutes in to each 30 minute window
+  // +1 to the expected 0 and 30 to account for KoL lag and two checks to be extra certain
+  if (currentPrices.red < 0 || minutes === 1 || minutes === 16) {
     await getTulipPrices(client);
   }
 
   const planned = [] as Plan[];
 
-  await db.each("SELECT * FROM players", (err, row) => {
-    const sellAt = row["sellAt"] as number;
-    const id = row["id"] as number;
-    colours.forEach((colour) => {
-      const quantity = row[colour];
-      if (quantity > 0 && currentPrices[colour] >= sellAt) {
-        console.log(
-          `Selling ${quantity} x ${colour} for ${row["name"]} (at ${currentPrices[colour]}, their min was ${sellAt})`
-        );
-        planned.push({
-          playerId: id,
-          playerName: row["name"],
-          colour,
-          quantity,
-          price: currentPrices[colour],
-        });
-      }
-    });
-  });
+  await db.each(
+    "SELECT * FROM players WHERE (red > 0 AND sellAt <= ?) OR (white > 0 AND sellAt <= ?) OR (blue > 0 AND sellAt <= ?)",
+    [currentPrices.red, currentPrices.white, currentPrices.blue],
+    (err, row) => {
+      const sellAt = row["sellAt"] as number;
+      const id = row["id"] as number;
+      colours.forEach((colour) => {
+        const quantity = row[colour];
+        if (quantity > 0 && currentPrices[colour] >= sellAt) {
+          console.log(
+            `Selling ${quantity} x ${colour} for ${row["name"]} (at ${currentPrices[colour]}, their min was ${sellAt})`
+          );
+          planned.push({
+            playerId: id,
+            playerName: row["name"],
+            colour,
+            quantity,
+            price: currentPrices[colour],
+          });
+        }
+      });
+    }
+  );
 
   const succeeded = [] as Plan[];
   const failed = [] as Plan[];
