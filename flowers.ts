@@ -1,6 +1,6 @@
 import { KoLBot } from "kol-chatbot";
 import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
-import dedent from "ts-dedent";
+import { dedent } from "ts-dedent";
 import { db } from "./db.js";
 
 const ids = { red: 8670, white: 8669, blue: 8671 };

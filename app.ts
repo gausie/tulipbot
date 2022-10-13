@@ -5,6 +5,7 @@ import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { addTulips, checkTulips, getCachedPrices } from "./flowers.js";
 import { db, Player } from "./db.js";
 import { buy } from "./spender.js";
+import fastify from "fastify";
 dotenv.config();
 
 function createBot() {
@@ -109,6 +110,13 @@ async function main() {
 
   await checkTulips(bot, client);
   setInterval(() => checkTulips(bot, client), 60000);
+
+  const server = fastify();
+  server.get("/prices", async () => {
+    return await db.all("SELECT * FROM prices");
+  });
+
+  await server.listen({ port: 3011, host: '0.0.0.0' });
 }
 
 main();
