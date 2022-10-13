@@ -6,7 +6,7 @@ import { addTulips, checkTulips, getCachedPrices } from "./flowers.js";
 import { db, Player } from "./db.js";
 import { buy } from "./spender.js";
 import fastify from "fastify";
-import cors from '@fastify/cors';
+import cors from "@fastify/cors";
 
 dotenv.config();
 
@@ -120,7 +120,7 @@ async function main() {
     return await db.all("SELECT * FROM prices");
   });
 
-  await server.listen({ port: 3011, host: '0.0.0.0' });
+  await server.listen({ port: 3011, host: "0.0.0.0" });
 }
 
 main();

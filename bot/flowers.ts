@@ -13,9 +13,9 @@ const tulipPrice =
   /<b>Chroner<\/b>&nbsp;<b>\((\d+)\)<\/b>.*?alt="(.*?) tulip\"/g;
 
 let currentPrices: { [colour in TulipColour]: number } = {
-  red: 0,
-  white: 0,
-  blue: 0,
+  red: -1,
+  white: -1,
+  blue: -1,
 };
 
 export function getCachedPrices() {
@@ -37,6 +37,8 @@ async function getTulipPrices(
     Date.now(),
   ]);
 
+  console.log(`Checked prices: ${JSON.stringify(currentPrices)}`);
+
   return currentPrices;
 }
 
@@ -49,9 +51,11 @@ type Plan = {
 };
 
 export async function checkTulips(bot: KoLBot, client: KoLClient) {
-  const prices = await getTulipPrices(client);
+  const minutes = new Date().getMinutes() % 30;
 
-  console.log(`Checked prices: ${JSON.stringify(prices)}`);
+  if (currentPrices.red < 0 || minutes === 0 || minutes === 15) {
+    await getTulipPrices(client);
+  }
 
   const planned = [] as Plan[];
 
@@ -60,16 +64,16 @@ export async function checkTulips(bot: KoLBot, client: KoLClient) {
     const id = row["id"] as number;
     colours.forEach((colour) => {
       const quantity = row[colour];
-      if (quantity > 0 && prices[colour] >= sellAt) {
+      if (quantity > 0 && currentPrices[colour] >= sellAt) {
         console.log(
-          `Selling ${quantity} x ${colour} for ${row["name"]} (at ${prices[colour]}, their min was ${sellAt})`
+          `Selling ${quantity} x ${colour} for ${row["name"]} (at ${currentPrices[colour]}, their min was ${sellAt})`
         );
         planned.push({
           playerId: id,
           playerName: row["name"],
           colour,
           quantity,
-          price: prices[colour],
+          price: currentPrices[colour],
         });
       }
     });
