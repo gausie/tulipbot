@@ -1,5 +1,6 @@
 import { KoLBot } from "kol-chatbot";
 import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
+import dedent from "ts-dedent";
 import { db } from "./db.js";
 
 const ids = { red: 8670, white: 8669, blue: 8671 };
@@ -86,7 +87,11 @@ export async function checkTulips(bot: KoLBot, client: KoLClient) {
     if (!colours.includes(plan.colour)) continue; // Last minute check to stop sql injection
     bot.sendKmail(
       plan.playerId,
-      `Congratulations, you just sold ${plan.quantity} x ${plan.colour} tulip(s) for ${plan.price}!\n\The chroner have been added to your balance`
+      dedent`
+        Congratulations, you just sold ${plan.quantity} x ${plan.colour} tulip(s) for ${plan.price}!
+
+        The chroner have been added to your balance
+      `
     );
     await db.run(
       "UPDATE players SET " +
@@ -133,6 +138,7 @@ export async function addTulips(msg: IncomingMessage) {
     console.log(
       `Adding tulips to ${msg.who.name} (${red} red, ${white} white, ${blue} blue)`
     );
+
     await db.run(
       "UPDATE players SET red = red + ?, white = white + ?, blue = blue + ? WHERE id = ?",
       [red, white, blue, id]
