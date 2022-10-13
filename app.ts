@@ -1,5 +1,6 @@
 import { KoLBot } from "kol-chatbot";
 import * as dotenv from "dotenv";
+import dedent from "dedent";
 import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { addTulips, checkTulips, getCachedPrices } from "./flowers.js";
 import { db, Player } from "./db.js";
@@ -37,12 +38,19 @@ async function handleWhisper(bot: KoLBot, client: KoLClient, msg: IncomingMessag
 
     switch (args[0].toLowerCase()) {
         case "help":
-            await bot.sendKmail(id, `balance: See your tulip and chroner balance\nprices: See current prices\nsell @ n: Sell your tulips if they are being bought at n or higher\nSoon you'll be able to buy... but not yet`)
+            await bot.sendKmail(id, dedent`
+                balance: See your tulip and Chroner balance
+                prices: See current prices
+                sell @ <min>: Set your minimum tulip sell price to <min>
+                sell: Tells you your current minimum tulip sell price
+                buy [quantity] <item name>: Buy items with your Chroner balance. If no quantity is specified, I'll buy 1.
+            `);
             return msg.reply("You have been sent a kmail with usage instructions");
         case "sell":
             if (!row) return msg.reply("You don't have a balance here, send me some tulips first");
+            if (args.length === 1) return msg.reply(`You are currently selling at ${row["sellAt"]}`);
             const match = msg.msg.match(/sell (?:@ ?)?(\d+)\s*$/);
-            if (!match) return msg.reply(`Cannot understand sell command. You are currently selling at ${row["sellAt"]}`);
+            if (!match) return msg.reply(`Cannot understand sell command.`);
             const sellAt = Number(match[1]);
             if (sellAt > 28) return msg.reply("This script author doesn't believe they sell at higher than 28");
             await db.run("UPDATE players SET sellAt = ? WHERE id = ?", [sellAt, id]);
