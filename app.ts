@@ -1,6 +1,6 @@
 import { KoLBot } from "kol-chatbot";
 import * as dotenv from "dotenv";
-import dedent from "dedent";
+import { dedent } from "ts-dedent";
 import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { addTulips, checkTulips, getCachedPrices } from "./flowers.js";
 import { db, Player } from "./db.js";
@@ -39,11 +39,13 @@ async function handleWhisper(bot: KoLBot, client: KoLClient, msg: IncomingMessag
     switch (args[0].toLowerCase()) {
         case "help":
             await bot.sendKmail(id, dedent`
+                Hello! This is tulipbot, a (probably) short-lived bot by gausie to make sure you get a good deal on your ttttulips. Here is how the bot is used:
+
                 balance: See your tulip and Chroner balance
                 prices: See current prices
                 sell @ <min>: Set your minimum tulip sell price to <min>
                 sell: Tells you your current minimum tulip sell price
-                buy [quantity] <item name>: Buy items with your Chroner balance. If no quantity is specified, I'll buy 1.
+                buy [quantity] <item name>: Buy items with your Chroner balance. If no quantity is specified, it'll buy 1.
             `);
             return msg.reply("You have been sent a kmail with usage instructions");
         case "sell":
