@@ -2,7 +2,8 @@ import { KoLBot } from "kol-chatbot";
 import * as dotenv from "dotenv";
 import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { addTulips, checkTulips, getCachedPrices } from "./flowers.js";
-import { db } from "./db.js";
+import { db, Player } from "./db.js";
+import { buy } from "./spender.js";
 dotenv.config()
 
 function createBot() {
@@ -16,19 +17,19 @@ function createBot() {
     return new KoLBot(username, password);
 }
 
-async function handle(bot: KoLBot, msg: IncomingMessage) {
+async function handle(bot: KoLBot, client: KoLClient, msg: IncomingMessage) {
     if (msg.type === "kmail") {
         await addTulips(msg);
     } else if (msg.type === "whisper") {
-        await handleWhisper(bot, msg);
+        await handleWhisper(bot, client, msg);
     }
 }
 
-async function handleWhisper(bot: KoLBot, msg: IncomingMessage) {
+async function handleWhisper(bot: KoLBot, client: KoLClient, msg: IncomingMessage) {
     console.log(`Message from ${msg.who.name} -> ${msg.msg}`);
     const id = Number(msg.who.id);
     const args = msg.msg.split(" ");
-    const row = await db.get("SELECT * FROM players WHERE id = ?", id);
+    const row = await db.get("SELECT * FROM players WHERE id = ?", id) as Player;
     switch (args[0]) {
         case "help":
             await bot.sendKmail(id, `balance: See your tulip and chroner balance\nprices: See current prices\nsell @ n: Sell your tulips if they are being bought at n or higher\nSoon you'll be able to buy... but not yet`)
@@ -43,7 +44,8 @@ async function handleWhisper(bot: KoLBot, msg: IncomingMessage) {
             return msg.reply(`Now selling tulips at ${sellAt} chroner`);
         case "buy": {
             if (!row) return msg.reply("You don't have a balance here, send me some tulips first");
-            return msg.reply(`Buying not implemented yet, sorry. We'll let you spend your ${row["chroner"]} chroner(s) before the event is over`);
+            // return msg.reply("Not working yet...");
+            return buy(bot, client, row, msg);
         }
         case "prices": {
             const { red, white, blue } = getCachedPrices();
@@ -62,7 +64,7 @@ async function main() {
 
     await client.logIn();
 
-    bot.start((msg) => handle(bot, msg));
+    bot.start((msg) => handle(bot, client, msg));
 
     await checkTulips(bot, client);
     setInterval(() => checkTulips(bot, client), 60000);

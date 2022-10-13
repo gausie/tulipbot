@@ -8,4 +8,6 @@ async function createDb() {
     return db;
 }
 
+export type Player = { id: number, name: string, sellAt: number, red: number, white: number, blue: number, chroner: number };
+
 export const db = await createDb();
