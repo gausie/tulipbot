@@ -6,6 +6,8 @@ import { addTulips, checkTulips, getCachedPrices } from "./flowers.js";
 import { db, Player } from "./db.js";
 import { buy } from "./spender.js";
 import fastify from "fastify";
+import cors from '@fastify/cors';
+
 dotenv.config();
 
 function createBot() {
@@ -112,6 +114,8 @@ async function main() {
   setInterval(() => checkTulips(bot, client), 60000);
 
   const server = fastify();
+  await server.register(cors);
+
   server.get("/prices", async () => {
     return await db.all("SELECT * FROM prices");
   });

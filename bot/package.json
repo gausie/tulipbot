@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
+    "@fastify/cors": "^8.1.0",
     "dotenv": "^16.0.3",
     "fastify": "^4.8.1",
     "kol-chatbot": "^1.0.2",
