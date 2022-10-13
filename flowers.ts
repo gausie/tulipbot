@@ -1,4 +1,4 @@
-import { Console } from "console";
+import { KoLBot } from "kol-chatbot";
 import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { db } from "./db.js";
 
@@ -24,7 +24,7 @@ async function getTulipPrices(client: KoLClient): Promise<{ [colour in TulipColo
 
 type Plan =  { playerId: number, playerName: string, colour: TulipColour, quantity: number, price: number };
 
-export async function checkTulips(client: KoLClient) {
+export async function checkTulips(bot: KoLBot, client: KoLClient) {
     const prices = await getTulipPrices(client);
 
     console.log(`Checked prices: ${JSON.stringify(prices)}`);
@@ -57,9 +57,8 @@ export async function checkTulips(client: KoLClient) {
 
     for (const plan of succeeded) {
         if (!colours.includes(plan.colour)) continue; // Last minute check to stop sql injection
-        await db.run("UPDATE players SET " + plan.colour + " = 0, chroner = chroner + ? WHERE id = ?", [plan.quantity * plan.price, plan.playerId], (r, e) => {
-            if (e) console.error(e);
-        });
+        bot.sendKmail(plan.playerId, `Congratulations, you just sold ${plan.quantity} x ${plan.colour} tulip(s) for ${plan.price}!\n\The chroner have been added to your balance`);
+        await db.run("UPDATE players SET " + plan.colour + " = 0, chroner = chroner + ? WHERE id = ?", [plan.quantity * plan.price, plan.playerId]);
     }
 
     for (const plan of failed) {

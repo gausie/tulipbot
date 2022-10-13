@@ -16,32 +16,29 @@ function createBot() {
     return new KoLBot(username, password);
 }
 
-async function handle(msg: IncomingMessage) {
+async function handle(bot: KoLBot, msg: IncomingMessage) {
     if (msg.type === "kmail") {
         await addTulips(msg);
     } else if (msg.type === "whisper") {
-        await handleWhisper(msg);
+        await handleWhisper(bot, msg);
     }
 }
 
-async function handleWhisper(msg: IncomingMessage) {
+async function handleWhisper(bot: KoLBot, msg: IncomingMessage) {
+    console.log(`Message from ${msg.who.name} -> ${msg.msg}`);
     const id = Number(msg.who.id);
     const args = msg.msg.split(" ");
     const row = await db.get("SELECT * FROM players WHERE id = ?", id);
     switch (args[0]) {
         case "help":
-            await msg.reply("balance: See your tulip and chroner balance");
-            await msg.reply("prices: See current prices");
-            await msg.reply("sell @ n: Sell your tulips if they are being bought at n or higher");
-            return msg.reply("Soon you'll be able to buy... but not yet");
+            await bot.sendKmail(id, `balance: See your tulip and chroner balance\nprices: See current prices\nsell @ n: Sell your tulips if they are being bought at n or higher\nSoon you'll be able to buy... but not yet`)
+            return msg.reply("You have been sent a kmail with usage instructions");
         case "sell":
             if (!row) return msg.reply("You don't have a balance here, send me some tulips first");
             const match = msg.msg.match(/sell (?:@ ?)?(\d+)\s*$/);
             if (!match) return msg.reply(`Cannot understand sell command. You are currently selling at ${row["sellAt"]}`);
             const sellAt = Number(match[1]);
-            if (sellAt > 28) {
-                return msg.reply("This script author doesn't believe they sell at higher than 28");
-            }
+            if (sellAt > 28) return msg.reply("This script author doesn't believe they sell at higher than 28");
             await db.run("UPDATE players SET sellAt = ? WHERE id = ?", [sellAt, id]);
             return msg.reply(`Now selling tulips at ${sellAt} chroner`);
         case "buy": {
@@ -65,10 +62,10 @@ async function main() {
 
     await client.logIn();
 
-    bot.start(handle);
+    bot.start((msg) => handle(bot, msg));
 
-    await checkTulips(client);
-    setInterval(() => checkTulips(client), 60000);
+    await checkTulips(bot, client);
+    setInterval(() => checkTulips(bot, client), 60000);
 }
 
 main();
