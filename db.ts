@@ -7,6 +7,9 @@ async function createDb() {
   await db.run(
     "CREATE TABLE IF NOT EXISTS players (id INT, name CHAR, sellAt INT, red INT, white INT, blue INT, chroner INT)"
   );
+  await db.run(
+    "CREATE TABLE IF NOT EXISTS prices (id INTEGER PRIMARY KEY AUTOINCREMENT, red INT, white INT, blue INT, time INT)"
+  );
   return db;
 }
 

@@ -29,6 +29,14 @@ async function getTulipPrices(
   currentPrices = Object.fromEntries(
     Array.from(page.matchAll(tulipPrice)).map((m) => [m[2], Number(m[1])])
   );
+
+  await db.run("INSERT INTO prices (red,white,blue,time) VALUES(?, ?, ?, ?)", [
+    currentPrices.red,
+    currentPrices.white,
+    currentPrices.blue,
+    Date.now(),
+  ]);
+
   return currentPrices;
 }
 
