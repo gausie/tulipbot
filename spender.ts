@@ -84,4 +84,5 @@ export async function buy(bot: KoLBot, client: KoLClient, row: Player, msg: Inco
         action: "Yep.",
         pwd: creds?.pwdhash,
     }, false);
+    await msg.reply("Your items have been sent via kmail");
 }

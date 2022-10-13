@@ -30,7 +30,12 @@ async function handleWhisper(bot: KoLBot, client: KoLClient, msg: IncomingMessag
     const id = Number(msg.who.id);
     const args = msg.msg.split(" ");
     const row = await db.get("SELECT * FROM players WHERE id = ?", id) as Player;
-    switch (args[0]) {
+
+    if (args.length < 1) {
+        return msg.reply("Don't send me blank messages >:(");
+    }
+
+    switch (args[0].toLowerCase()) {
         case "help":
             await bot.sendKmail(id, `balance: See your tulip and chroner balance\nprices: See current prices\nsell @ n: Sell your tulips if they are being bought at n or higher\nSoon you'll be able to buy... but not yet`)
             return msg.reply("You have been sent a kmail with usage instructions");
