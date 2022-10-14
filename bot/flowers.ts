@@ -171,7 +171,7 @@ export async function addTulips(client: KoLClient, msg: IncomingMessage) {
 
   if (!exists) {
     console.log(
-      `Adding tulips to new user ${msg.who.name} (${red} red, ${white} white, ${blue} blue)`
+      `Adding tulips to new user ${msg.who.name} (${red} red, ${white} white, ${blue} blue, ${chroner} chroner)`
     );
 
     await db.run("INSERT INTO players VALUES (?, ?, ?, ?, ?, ?, ?)", [
@@ -185,7 +185,7 @@ export async function addTulips(client: KoLClient, msg: IncomingMessage) {
     ]);
   } else {
     console.log(
-      `Adding tulips to existing user ${msg.who.name} (${red} red, ${white} white, ${blue} blue)`
+      `Adding tulips to existing user ${msg.who.name} (${red} red, ${white} white, ${blue} blue, ${chroner} chroner)`
     );
 
     await db.run(
