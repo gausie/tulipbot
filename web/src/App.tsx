@@ -13,7 +13,11 @@ import { roundToNearestMinutes, format } from "date-fns";
 
 type Price = { time: number; red: number; white: number; blue: number };
 
-function DateFormatter(time: number) {
+function DateFormatter(time: string | number) {
+  if (typeof time !== "number") {
+    return time;
+  }
+
   const date = new Date(time);
 
   return format(
