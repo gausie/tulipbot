@@ -117,7 +117,7 @@ async function main() {
   await server.register(cors);
 
   server.get("/prices", async () => {
-    return await db.all("SELECT * FROM prices");
+    return await db.all("SELECT * FROM prices ORDER BY time ASC");
   });
 
   await server.listen({ port: 3011, host: "0.0.0.0" });

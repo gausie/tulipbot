@@ -26,20 +26,34 @@ export function getCachedPrices() {
 async function getTulipPrices(
   client: KoLClient
 ): Promise<{ [colour in TulipColour]: number }> {
-  const page = await client.visitUrl("shop.php?whichshop=flowertradein");
-  currentPrices = Object.fromEntries(
-    Array.from(page.matchAll(tulipPrice)).map((m) => [m[2], Number(m[1])])
-  );
+  const minutes = new Date().getMinutes() % 30;
 
-  await db.run("INSERT INTO prices (red,white,blue,time) VALUES(?, ?, ?, ?)", [
-    currentPrices.red,
-    currentPrices.white,
-    currentPrices.blue,
-    Date.now(),
-  ]);
 
-  console.log(`Checked prices: ${JSON.stringify(currentPrices)}`);
+  // Check at 1 and 16 minutes in to each 30 minute window
+  // +1 to the expected 0 and 30 to account for KoL lag and two checks to be extra certain
+  if (currentPrices.red < 0 || minutes === 1 || minutes === 16) {
+    const page = await client.visitUrl("shop.php?whichshop=flowertradein");
+    const prices = Object.fromEntries(
+      Array.from(page.matchAll(tulipPrice)).map((m) => [m[2], Number(m[1])])
+    );
 
+    const last = await db.get("SELECT * FROM prices ORDER BY time DESC LIMIT 1");
+
+    if (last.red !== prices.red && last.white !== prices.white && last.blue !== prices.blue) {
+      await db.run("INSERT INTO prices (red,white,blue,time) VALUES(?, ?, ?, ?)", [
+        prices.red,
+        prices.white,
+        prices.blue,
+        Date.now(),
+      ]);
+
+      console.log(`Checked prices: ${JSON.stringify(prices)}`);
+    } else if (currentPrices.red < 0) {
+      console.log("Bot just restarted and prices are still the same");
+    }
+
+    currentPrices = prices;
+  }
   return currentPrices;
 }
 
@@ -52,34 +66,28 @@ type Plan = {
 };
 
 export async function checkTulips(bot: KoLBot, client: KoLClient) {
-  const minutes = new Date().getMinutes() % 30;
-
-  // Check at 1 and 16 minutes in to each 30 minute window
-  // +1 to the expected 0 and 30 to account for KoL lag and two checks to be extra certain
-  if (currentPrices.red < 0 || minutes === 1 || minutes === 16) {
-    await getTulipPrices(client);
-  }
+  const prices = await getTulipPrices(client);
 
   const planned = [] as Plan[];
 
   await db.each(
     "SELECT * FROM players WHERE (red > 0 AND sellAt <= ?) OR (white > 0 AND sellAt <= ?) OR (blue > 0 AND sellAt <= ?)",
-    [currentPrices.red, currentPrices.white, currentPrices.blue],
+    [prices.red, prices.white, prices.blue],
     (err, row) => {
       const sellAt = row["sellAt"] as number;
       const id = row["id"] as number;
       colours.forEach((colour) => {
         const quantity = row[colour];
-        if (quantity > 0 && currentPrices[colour] >= sellAt) {
+        if (quantity > 0 && prices[colour] >= sellAt) {
           console.log(
-            `Selling ${quantity} x ${colour} for ${row["name"]} (at ${currentPrices[colour]}, their min was ${sellAt})`
+            `Selling ${quantity} x ${colour} for ${row["name"]} (at ${prices[colour]}, their min was ${sellAt})`
           );
           planned.push({
             playerId: id,
             playerName: row["name"],
             colour,
             quantity,
-            price: currentPrices[colour],
+            price: prices[colour],
           });
         }
       });
