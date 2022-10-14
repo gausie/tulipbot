@@ -4,7 +4,13 @@ import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { dedent } from "ts-dedent";
 import { db } from "./db.js";
 
-const ids = { rose: 8668, red: 8670, white: 8669, blue: 8671 } as const;
+const ids = {
+  chroner: 7567,
+  rose: 8668,
+  red: 8670,
+  white: 8669,
+  blue: 8671,
+} as const;
 const colours = ["red", "white", "blue"] as const;
 type TulipColour = typeof colours[number];
 
@@ -58,6 +64,38 @@ async function getTulipPrices(
     currentPrices = prices;
   }
   return currentPrices;
+}
+
+export async function checkStock(client: KoLClient) {
+  const expected = await db.get(
+    "SELECT SUM(red) as red, SUM(white) as white, SUM(blue) as blue, SUM(chroner) as chroner FROM players"
+  );
+  const inventory = await client.visitUrl(
+    "api.php?what=inventory&for=tulipbot"
+  );
+  const actual = Object.fromEntries(
+    colours.map((c) => [c, Number(inventory[String(ids[c])] || 0)] as const)
+  ) as { [key in TulipColour]: number };
+  colours.forEach((c) => {
+    const missing = expected[c] - actual[c];
+    if (missing !== 0) {
+      console.log(
+        `WARNING: ${missing > 0 ? "MISSING" : "EXTRA"} ${Math.abs(
+          missing
+        )} ${c.toUpperCase()} TULIPS`
+      );
+    }
+  });
+
+  const actualChroner = Number(inventory[String(ids.chroner)] || 0);
+  const missingChroner = expected["chroner"] - actualChroner;
+  if (missingChroner !== 0) {
+    console.log(
+      `WARNING: ${missingChroner > 0 ? "MISSING" : "EXTRA"} ${Math.abs(
+        missingChroner
+      )} CHRONER`
+    );
+  }
 }
 
 async function sell(client: KoLClient, row: number, quantity: number) {

@@ -2,7 +2,12 @@ import { KoLBot } from "kol-chatbot";
 import * as dotenv from "dotenv";
 import { dedent } from "ts-dedent";
 import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
-import { addTulips, checkTulips, getCachedPrices } from "./flowers.js";
+import {
+  addTulips,
+  checkTulips,
+  getCachedPrices,
+  checkStock,
+} from "./flowers.js";
 import { db, Player } from "./db.js";
 import { buy } from "./spender.js";
 import fastify from "fastify";
@@ -137,6 +142,8 @@ async function main() {
   await client.logIn();
 
   await updateProfile(client);
+  await checkStock(client);
+
   bot.start((msg) => handle(bot, client, msg));
 
   await checkTulips(bot, client);

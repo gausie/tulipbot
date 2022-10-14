@@ -264,7 +264,11 @@ export async function buy(
     {
       towho: row.id,
       contact: 0,
-      note: `Please find attached ${item.name} x ${quantity}. Your remaining balance is ${row.chroner - spend} chroner.`,
+      note: `Please find attached ${
+        item.name
+      } x ${quantity}. Your remaining balance is ${
+        row.chroner - spend
+      } chroner.`,
       insidenote:
         "Enjoy! 10 meat to cover the package would be appreciated but not required",
       whichpackage: 1,
