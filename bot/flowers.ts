@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import { KoLBot } from "kol-chatbot";
 import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { dedent } from "ts-dedent";
@@ -95,6 +96,7 @@ export async function checkTulips(bot: KoLBot, client: KoLClient) {
       }&whichrow=${getRow(plan.colour)}`
     );
     if (result.includes("You don't have enough")) {
+      await fs.writeFile(`ERROR_${Date.now()}.html`, result);
       failed.push(plan);
     } else {
       succeeded.push(plan);
