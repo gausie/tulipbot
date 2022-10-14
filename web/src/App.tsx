@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Brush } from 'recharts';
+import { roundToNearestMinutes, format } from "date-fns";
 
-type RawPrice = { time: number, red: number, white: number, blue: number };
-type Price = Omit<RawPrice, 'time'> & { time: Date };
+type Price = { time: number, red: number, white: number, blue: number };
+
+function DateFormatter(time: number) {
+  const date = new Date(time);
+
+  return format(roundToNearestMinutes(date, { nearestTo: 30, roundingMethod: "floor" }), "P HH:mm");
+}
 
 export default function App() {
   const [data, setData] = useState([] as Price[]);
   
   useEffect(() => {
     async function load() {
-      const response = await fetch("/prices");
-      const prices: RawPrice[] = await response.json();
-      setData(prices.map(p => ({ ...p, time: new Date(p.time)})));
+      const response = await fetch("http://beefy-boy.local:3011/prices");
+      const prices: Price[] = await response.json();
+      setData(prices);
     }
 
     load();
@@ -32,13 +38,14 @@ export default function App() {
         }}
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="time" hide={true} />
+        <XAxis dataKey="time" tickFormatter={DateFormatter} />
         <YAxis />
-        <Tooltip />
+        <Tooltip labelFormatter={DateFormatter} />
         <Legend />
         <Line type="monotone" dataKey="red" stroke="#ff0000" />
         <Line type="monotone" dataKey="white" stroke="#aaaaaa" />
         <Line type="monotone" dataKey="blue" stroke="#0000ff" />
+        <Brush dataKey="time" height={30} stroke="#8884d8" tickFormatter={DateFormatter} />
       </LineChart>
     </div>
   );
