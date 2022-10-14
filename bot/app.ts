@@ -12,14 +12,14 @@ dotenv.config();
 
 function usage() {
   return dedent`
-      This is tulipbot, a (probably) short-lived bot by gausie.
+      Hello! This is tulipbot, a (probably) short-lived bot by gausie. Usage:
 
       balance: See your tulip and Chroner balance.
       prices: See current prices.
       sell [@ <min>]: Set your minimum tulip sell price to <min>. No min will tell you your current sell price.
-      buy [quantity] <item name>: Buy items with your Chroner balance. If no quantity is specified, it'll buy 1.
+      buy [quantity|*] <item name>: Buy items with your Chroner balance. If no quantity is specified, it'll buy 1.
 
-      To add to your balance, send tulips to the bot via Kmail. Do not send in gift packages. Roses will also be converted to round your Chroner balance.
+      To add to your balance, send tulips to the bot via Kmail. Do not send in gift packages. Roses can be converted to round your balance.
   `;
 }
 

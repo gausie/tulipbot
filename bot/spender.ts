@@ -194,7 +194,7 @@ function parseMessage(msg: string): [quantity: number, itemName: string] {
   const parts = msg.split(" ");
   if (parts[0] !== "buy") return [0, ""];
   let itemName = "";
-  let quantity = Number(parts[1]);
+  let quantity = parts[1] === "*" ? -1 : Number(parts[1]);
   if (Number.isNaN(quantity)) {
     quantity = 1;
     itemName = parts.slice(1).join(" ");
@@ -211,8 +211,8 @@ export async function buy(
   row: Player,
   msg: IncomingMessage
 ) {
-  const [quantity, itemName] = parseMessage(msg.msg);
-  if (quantity < 1) return msg.reply("Cannot parse message");
+  let [quantity, itemName] = parseMessage(msg.msg);
+  if (quantity === 0) return msg.reply("Cannot parse message");
 
   const item = items.find(
     (i) => i.name.toLowerCase() === itemName.toLowerCase()
@@ -220,6 +220,9 @@ export async function buy(
   if (!item) return msg.reply("Item not recognized");
 
   const max = Math.floor(row.chroner / item.cost);
+
+  if (quantity === -1) quantity = max;
+
   if (max < quantity) {
     return msg.reply(
       `You can't afford that many. In fact, you ${
