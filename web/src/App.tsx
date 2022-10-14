@@ -94,6 +94,7 @@ export default function App() {
             height={30}
             stroke="#8884d8"
             tickFormatter={DateFormatter}
+            travellerWidth={20}
           />
         </LineChart>
       </ResponsiveContainer>
