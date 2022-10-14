@@ -252,8 +252,9 @@ export async function buy(
   console.log(
     `A purchase by ${row.name} succeeded! (${item.name} x ${quantity})`
   );
+  const spend = quantity * item.cost;
   await db.run("UPDATE players SET chroner = chroner - ? WHERE id = ?", [
-    quantity * item.cost,
+    spend,
     row.id,
   ]);
   const creds = client["_credentials"];
@@ -263,7 +264,7 @@ export async function buy(
     {
       towho: row.id,
       contact: 0,
-      note: `Please find attached ${item.name} x ${quantity}`,
+      note: `Please find attached ${item.name} x ${quantity}. Your remaining balance is ${row.chroner - spend} chroner.`,
       insidenote:
         "Enjoy! 10 meat to cover the package would be appreciated but not required",
       whichpackage: 1,
