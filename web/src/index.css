@@ -1,5 +1,6 @@
 html, body, #root {
     height: 100%;
+    margin: 0;
 }
 
 #root {
@@ -8,6 +9,33 @@ html, body, #root {
     justify-content: center;
 }
 
+@media only screen and (max-width: 600px) {
+    #root {
+        align-items: start;
+    }
+}
+
+#container {
+    width: 90%;
+    height: 80%;
+}
+
 h1 {
     text-align: center;
+}
+
+img.flip {
+    transform: scaleX(-1);
+}
+
+image.dot-red {
+    filter: invert(20%) sepia(78%) saturate(7433%) hue-rotate(3deg) brightness(92%) contrast(124%);
+}
+
+image.dot-white {
+    filter: brightness(200%) contrast(200%);
+}
+
+image.dot-blue {
+    filter: invert(7%) sepia(100%) saturate(7456%) hue-rotate(246deg) brightness(112%) contrast(144%);
 }
