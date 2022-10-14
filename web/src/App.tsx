@@ -31,7 +31,7 @@ export default function App() {
 
   useEffect(() => {
     async function load() {
-      const response = await fetch("http://beefy-boy.local:3011/prices");
+      const response = await fetch("/prices");
       const prices: Price[] = await response.json();
       setData(prices);
     }
