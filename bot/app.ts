@@ -10,6 +10,19 @@ import cors from "@fastify/cors";
 
 dotenv.config();
 
+function usage() {
+  return dedent`
+      This is tulipbot, a (probably) short-lived bot by gausie.
+
+      balance: See your tulip and Chroner balance.
+      prices: See current prices.
+      sell [@ <min>]: Set your minimum tulip sell price to <min>. No min will tell you your current sell price.
+      buy [quantity] <item name>: Buy items with your Chroner balance. If no quantity is specified, it'll buy 1.
+
+      To add to your balance, send tulips to the bot via Kmail. Do not send in gift packages. Roses will also be converted to round your Chroner balance.
+  `;
+}
+
 function createBot() {
   const username = process.env.USERNAME;
   const password = process.env.PASSWORD;
@@ -23,7 +36,7 @@ function createBot() {
 
 async function handle(bot: KoLBot, client: KoLClient, msg: IncomingMessage) {
   if (msg.type === "kmail") {
-    await addTulips(msg);
+    await addTulips(client, msg);
   } else if (msg.type === "whisper") {
     await handleWhisper(bot, client, msg);
   }
@@ -48,18 +61,7 @@ async function handleWhisper(
 
   switch (args[0].toLowerCase()) {
     case "help":
-      await bot.sendKmail(
-        id,
-        dedent`
-                Hello! This is tulipbot, a (probably) short-lived bot by gausie to make sure you get a good deal on your ttttulips. Here is how the bot is used:
-
-                balance: See your tulip and Chroner balance
-                prices: See current prices
-                sell @ <min>: Set your minimum tulip sell price to <min>
-                sell: Tells you your current minimum tulip sell price
-                buy [quantity] <item name>: Buy items with your Chroner balance. If no quantity is specified, it'll buy 1.
-            `
-      );
+      await bot.sendKmail(id, usage());
       return msg.reply("You have been sent a kmail with usage instructions");
     case "sell":
       if (!row)
@@ -102,12 +104,39 @@ async function handleWhisper(
   }
 }
 
+async function getProfileQuote(client: KoLClient) {
+  const page: string = await client.visitUrl("account.php", {
+    action: "loadtab",
+    value: "profile",
+  });
+
+  const m = page.match(/<textarea name=\"quote\">(.*?)<\/textarea>/s);
+
+  return m?.[1] ?? "";
+}
+
+async function updateProfile(client: KoLClient) {
+  const quote = usage();
+  const current = await getProfileQuote(client);
+  if (current !== quote) {
+    const creds = client["_credentials"];
+    await client.visitUrl("account.php", undefined, {
+      pwd: creds?.pwdhash,
+      "actions[]": "quote",
+      quote,
+      tab: "profile",
+      action: "Save Changes",
+    });
+  }
+}
+
 async function main() {
   const bot = createBot();
   const client: KoLClient = bot["_client"];
 
   await client.logIn();
 
+  await updateProfile(client);
   bot.start((msg) => handle(bot, client, msg));
 
   await checkTulips(bot, client);
