@@ -4,7 +4,7 @@ import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { dedent } from "ts-dedent";
 import { db } from "./db.js";
 
-const ids = { red: 8670, white: 8669, blue: 8671 };
+const ids = { rose: 8668, red: 8670, white: 8669, blue: 8671 } as const;
 const colours = ["red", "white", "blue"] as const;
 type TulipColour = typeof colours[number];
 
@@ -28,7 +28,6 @@ async function getTulipPrices(
 ): Promise<{ [colour in TulipColour]: number }> {
   const minutes = new Date().getMinutes() % 30;
 
-
   // Check at 1 and 16 minutes in to each 30 minute window
   // +1 to the expected 0 and 30 to account for KoL lag and two checks to be extra certain
   if (currentPrices.red < 0 || minutes === 1 || minutes === 16) {
@@ -37,15 +36,19 @@ async function getTulipPrices(
       Array.from(page.matchAll(tulipPrice)).map((m) => [m[2], Number(m[1])])
     );
 
-    const last = await db.get("SELECT * FROM prices ORDER BY time DESC LIMIT 1");
+    const last = await db.get(
+      "SELECT * FROM prices ORDER BY time DESC LIMIT 1"
+    );
 
-    if (last.red !== prices.red && last.white !== prices.white && last.blue !== prices.blue) {
-      await db.run("INSERT INTO prices (red,white,blue,time) VALUES(?, ?, ?, ?)", [
-        prices.red,
-        prices.white,
-        prices.blue,
-        Date.now(),
-      ]);
+    if (
+      last.red !== prices.red &&
+      last.white !== prices.white &&
+      last.blue !== prices.blue
+    ) {
+      await db.run(
+        "INSERT INTO prices (red,white,blue,time) VALUES(?, ?, ?, ?)",
+        [prices.red, prices.white, prices.blue, Date.now()]
+      );
 
       console.log(`Checked prices: ${JSON.stringify(prices)}`);
     } else if (currentPrices.red < 0) {
@@ -55,6 +58,18 @@ async function getTulipPrices(
     currentPrices = prices;
   }
   return currentPrices;
+}
+
+async function sell(client: KoLClient, row: number, quantity: number) {
+  const result: string = await client.visitUrl(
+    `shop.php?whichshop=flowertradein&action=buyitem&quantity=${quantity}&whichrow=${row}`
+  );
+  if (result.includes("You don't have enough")) {
+    await fs.writeFile(`ERROR_${Date.now()}.html`, result);
+    return false;
+  } else {
+    return true;
+  }
 }
 
 type Plan = {
@@ -98,16 +113,11 @@ export async function checkTulips(bot: KoLBot, client: KoLClient) {
   const failed = [] as Plan[];
 
   for (const plan of planned) {
-    const result: string = await client.visitUrl(
-      `shop.php?whichshop=flowertradein&action=buyitem&quantity=${
-        plan.quantity
-      }&whichrow=${getRow(plan.colour)}`
-    );
-    if (result.includes("You don't have enough")) {
-      await fs.writeFile(`ERROR_${Date.now()}.html`, result);
-      failed.push(plan);
-    } else {
+    const success = await sell(client, getRow(plan.colour), plan.quantity);
+    if (success) {
       succeeded.push(plan);
+    } else {
+      failed.push(plan);
     }
   }
 
@@ -139,20 +149,31 @@ export async function checkTulips(bot: KoLBot, client: KoLClient) {
 const itemPattern =
   /<table class="item" style="float: none" rel="id=(\d+).*?&n=(\d+).*?">/g;
 
-export async function addTulips(msg: IncomingMessage) {
+export async function addTulips(client: KoLClient, msg: IncomingMessage) {
   const id = Number(msg.who.id);
-  const tulips = Object.fromEntries(
+  const items = Object.fromEntries(
     Array.from(msg.msg.matchAll(itemPattern))
       .map((m) => [Number(m[1]), Number(m[2])])
-      .filter(([k]) => Object.values(ids).includes(k))
+      .filter(([k]) => Object.values(ids).includes(k as any))
   );
-  const red = tulips[ids["red"]] || 0;
-  const white = tulips[ids["white"]] || 0;
-  const blue = tulips[ids["blue"]] || 0;
+  const red = items[ids.red] || 0;
+  const white = items[ids.white] || 0;
+  const blue = items[ids.blue] || 0;
+  const rose = items[ids.rose] || 0;
+
+  const chroner = Math.floor(rose / 2);
+
+  if (chroner > 0) {
+    await sell(client, 759, chroner);
+  }
 
   const exists = await db.get("SELECT 1 FROM players WHERE id = ?", id);
 
   if (!exists) {
+    console.log(
+      `Adding tulips to new user ${msg.who.name} (${red} red, ${white} white, ${blue} blue)`
+    );
+
     await db.run("INSERT INTO players VALUES (?, ?, ?, ?, ?, ?, ?)", [
       id,
       msg.who.name,
@@ -160,16 +181,16 @@ export async function addTulips(msg: IncomingMessage) {
       red,
       white,
       blue,
-      0,
+      chroner,
     ]);
   } else {
     console.log(
-      `Adding tulips to ${msg.who.name} (${red} red, ${white} white, ${blue} blue)`
+      `Adding tulips to existing user ${msg.who.name} (${red} red, ${white} white, ${blue} blue)`
     );
 
     await db.run(
-      "UPDATE players SET red = red + ?, white = white + ?, blue = blue + ? WHERE id = ?",
-      [red, white, blue, id]
+      "UPDATE players SET red = red + ?, white = white + ?, blue = blue + ?, chroner = chroner + ? WHERE id = ?",
+      [red, white, blue, chroner, id]
     );
   }
 }
