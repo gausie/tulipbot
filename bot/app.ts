@@ -135,6 +135,17 @@ async function updateProfile(client: KoLClient) {
   }
 }
 
+function parseOrder(input: string | undefined) {
+  if (input && ["ASC", "DESC"].includes(input.toUpperCase())) {
+    return input.toUpperCase();
+  }
+  return "ASC";
+}
+
+function parseLimit(input: string | undefined) {
+  return input && Number(input) ? input : 0;
+}
+
 async function main() {
   const bot = createBot();
   const client: KoLClient = bot["_client"];
@@ -152,8 +163,15 @@ async function main() {
   const server = fastify();
   await server.register(cors);
 
-  server.get("/prices", async () => {
-    return await db.all("SELECT * FROM prices ORDER BY time ASC");
+  server.get("/prices", async (request) => {
+    const order = parseOrder(request.query["order"]);
+    const limit = parseLimit(request.query["limit"]);
+
+    return await db.all(
+      `SELECT * FROM prices ORDER BY time ${order} ${
+        limit > 0 ? `LIMIT ${limit}` : ""
+      }`
+    );
   });
 
   await server.listen({ port: 3011, host: "0.0.0.0" });
