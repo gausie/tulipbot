@@ -42,6 +42,12 @@ async function getTulipPrices(
       Array.from(page.matchAll(tulipPrice)).map((m) => [m[2], Number(m[1])])
     );
 
+    if (!prices) {
+      // Sometimes this page can fail?
+      await fs.writeFile(`PRICES_ERROR_${Date.now()}.html`, page);
+      return currentPrices;
+    }
+
     const last = await db.get(
       "SELECT * FROM prices ORDER BY time DESC LIMIT 1"
     );
@@ -103,7 +109,7 @@ async function sell(client: KoLClient, row: number, quantity: number) {
     `shop.php?whichshop=flowertradein&action=buyitem&quantity=${quantity}&whichrow=${row}`
   );
   if (result.includes("You don't have enough")) {
-    await fs.writeFile(`ERROR_${Date.now()}.html`, result);
+    await fs.writeFile(`BUY_ERROR_${Date.now()}.html`, result);
     return false;
   } else {
     return true;
