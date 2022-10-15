@@ -116,6 +116,7 @@ type Plan = {
   colour: TulipColour;
   quantity: number;
   price: number;
+  balance: number;
 };
 
 export async function checkTulips(bot: KoLBot, client: KoLClient) {
@@ -141,6 +142,7 @@ export async function checkTulips(bot: KoLBot, client: KoLClient) {
             colour,
             quantity,
             price: prices[colour],
+            balance: row["chroner"] + quantity * prices[colour],
           });
         }
       });
@@ -166,7 +168,7 @@ export async function checkTulips(bot: KoLBot, client: KoLClient) {
       dedent`
         Congratulations, you just sold ${plan.quantity} x ${plan.colour} tulip(s) for ${plan.price}!
 
-        The chroner have been added to your balance
+        The chroner have been added to your balance, which is now ${plan.balance}.
       `
     );
     await db.run(
@@ -198,6 +200,14 @@ export async function addTulips(client: KoLClient, msg: IncomingMessage) {
   const white = items[ids.white] || 0;
   const blue = items[ids.blue] || 0;
   const rose = items[ids.rose] || 0;
+
+  if (red + white + blue + rose === 0) {
+    return msg.reply(dedent`
+      I didn't see any items I look for in your message. If that was a donation, thank you!
+
+      If you sent things in a gift package, they haven't been counted. They'll have to be returned manually, which is not guaranteed. This is annoying - please read the instructions in future.
+    `);
+  }
 
   const chroner = Math.floor(rose / 2);
 
