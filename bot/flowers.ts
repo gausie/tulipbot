@@ -69,6 +69,7 @@ async function getTulipPrices(
 
     currentPrices = prices;
   }
+
   return currentPrices;
 }
 
