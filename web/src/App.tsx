@@ -9,6 +9,7 @@ import {
   Legend,
   Brush,
   ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
 import { roundToNearestMinutes, format } from "date-fns";
 
@@ -65,9 +66,24 @@ export default function App() {
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" tickFormatter={DateFormatter} />
-          <YAxis />
+          <YAxis
+            domain={[0, 30]}
+            width={40}
+            ticks={[0, 5, 10, 15, 20, 25, 30]}
+          />
           <Tooltip labelFormatter={DateFormatter} />
-          <Legend />
+          <ReferenceLine
+            y={28}
+            label="Max"
+            stroke="grey"
+            strokeDasharray="3 3"
+          />
+          <ReferenceLine
+            y={2}
+            label="Min"
+            stroke="grey"
+            strokeDasharray="3 3"
+          />
           <Line
             type="monotone"
             dataKey="red"
