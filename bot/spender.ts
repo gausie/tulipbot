@@ -257,29 +257,45 @@ export async function buy(
     spend,
     row.id,
   ]);
-  const creds = client["_credentials"];
-  await client.visitUrl(
-    "town_sendgift.php",
-    {},
-    {
-      towho: row.id,
-      contact: 0,
-      note: `Please find attached ${
-        item.name
-      } x ${quantity}. Your remaining balance is ${
-        row.chroner - spend
-      } chroner.`,
-      insidenote:
-        "Enjoy! 10 meat to cover the package would be appreciated but not required",
-      whichpackage: 1,
-      fromwhere: 0,
-      howmany1: quantity,
-      whichitem1: item.id,
-      sendmeat: 0,
-      action: "Yep.",
-      pwd: creds?.pwdhash,
-    },
-    false
+  await sendGift(
+    client,
+    row.id,
+    `Please find attached ${
+      item.name
+    } x ${quantity}. Your remaining balance is ${row.chroner - spend} chroner.`,
+    "Enjoy! 10 meat to cover the package would be appreciated but not required",
+    [[item.id, quantity]]
   );
   await msg.reply("Your items have been sent via kmail");
+}
+
+export async function sendGift(
+  client: KoLClient,
+  to: number,
+  note: string,
+  insideNote: string,
+  itemQuantities: [itemId: number, quantity: number][]
+) {
+  const creds = client["_credentials"];
+
+  for (const [itemId, quantity] of itemQuantities) {
+    await client.visitUrl(
+      "town_sendgift.php",
+      {},
+      {
+        towho: to,
+        contact: 0,
+        note,
+        insideNote,
+        whichpackage: 1,
+        fromwhere: 0,
+        howmany1: quantity,
+        whichitem1: itemId,
+        sendmeat: 0,
+        action: "Yep.",
+        pwd: creds?.pwdhash,
+      },
+      false
+    );
+  }
 }

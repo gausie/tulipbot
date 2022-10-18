@@ -4,7 +4,7 @@ import { IncomingMessage, KoLClient } from "kol-chatbot/dist/KoLClient";
 import { dedent } from "ts-dedent";
 import { db } from "./db.js";
 
-const ids = {
+export const ids = {
   chroner: 7567,
   rose: 8668,
   red: 8670,

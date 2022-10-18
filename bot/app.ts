@@ -7,9 +7,10 @@ import {
   checkTulips,
   getCachedPrices,
   checkStock,
+  ids,
 } from "./flowers.js";
 import { db, Player } from "./db.js";
-import { buy } from "./spender.js";
+import { buy, sendGift } from "./spender.js";
 import fastify from "fastify";
 import cors from "@fastify/cors";
 
@@ -104,6 +105,28 @@ async function handleWhisper(
         );
       return msg.reply(
         `Your balance is ${row["red"]} red tulip(s), ${row["white"]} white tulip(s), ${row["blue"]} blue tulip(s), and ${row["chroner"]} chroner(s)`
+      );
+    }
+    case "withdraw": {
+      if (!row || row.red + row.white + row.blue === 0)
+        return msg.reply("You have nothing to withdraw!");
+      await sendGift(
+        client,
+        row.id,
+        "Please find attached your tulips (1 type per pacakge}",
+        "Enjoy! 10 meat to cover the package would be appreciated but not required",
+        [
+          [ids.red, row.red],
+          [ids.white, row.white],
+          [ids.blue, row.blue],
+        ]
+      );
+      await db.run(
+        "UPDATE players SET red = red - ?, white = white - ?, blue = blue - ? WHERE id = ?",
+        [row.red, row.white, row.blue, id]
+      );
+      return msg.reply(
+        "Your tulips have now been sent back to you. Remember roses cannot be returned as they are immediately turned into Chroner"
       );
     }
   }
