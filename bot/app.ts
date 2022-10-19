@@ -183,6 +183,8 @@ async function main() {
   await checkTulips(bot, client);
   setInterval(() => checkTulips(bot, client), 60000);
 
+  // await warnTulips(bot);
+
   const server = fastify();
   await server.register(cors);
 

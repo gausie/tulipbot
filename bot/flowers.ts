@@ -249,3 +249,16 @@ export async function addTulips(client: KoLClient, msg: IncomingMessage) {
     );
   }
 }
+
+export async function warnTulips(bot: KoLBot) {
+  const accounts = await db.all(
+    "SELECT * FROM players WHERE red > 0 OR white > 0 OR blue > 0 OR chroner > 0"
+  );
+
+  for (const account of accounts) {
+    await bot.sendKmail(
+      account.id,
+      "Reminder: the tower goes away today at rollover (just over 4 hours from now). Remember to use your Chroner balance before then, and consider setting your sell price very low. Lots of love, gausie <3"
+    );
+  }
+}
